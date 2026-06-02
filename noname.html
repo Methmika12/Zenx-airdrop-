@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZENX | Future of Testnet Rewards</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zenx: {
+                            dark: '#050505',
+                            card: '#0f0f16',
+                            purple: '#7c3aed',
+                            neon: '#b026ff',
+                            neonHover: '#d946ef',
+                            success: '#10b981',
+                            danger: '#ef4444',
+                            text: '#e2e8f0',
+                            muted: '#64748b'
+                        }
+                    },
+                    fontFamily: {
+                        display: ['Orbitron', 'sans-serif'],
+                        body: ['Rajdhani', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        'pulse-glow': {
+                            '0%, 100%': { opacity: 1, boxShadow: '0 0 10px #b026ff' },
+                            '50%': { opacity: .7, boxShadow: '0 0 20px #b026ff' },
+                        },
+                        'float': {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-5px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050505;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.15) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(176, 38, 255, 0.1) 0%, transparent 20%);
+            color: #e2e8f0;
+            font-family: 'Rajdhani', sans-serif;
+        }
+        
+        .glass-panel {
+            background: rgba(15, 15, 22, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .neon-text {
+            text-shadow: 0 0 10px rgba(176, 38, 255, 0.7);
+        }
+
+        .neon-border:focus-within {
+            border-color: #d946ef;
+            box-shadow: 0 0 15px rgba(217, 70, 239, 0.4);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f0f16; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b0764; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7c3aed; 
+        }
+
+        .hidden-page {
+            display: none;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar" class="glass-panel sticky top-0 z-40 border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="router.navigate('landing')">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-zenx-purple to-zenx-neon flex items-center justify-center animate-pulse-glow">
+                        <i class="fa-solid fa-bolt text-white text-lg"></i>
+                    </div>
+                    <span class="font-display font-bold text-2xl tracking-wider text-white neon-text">ZENX</span>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:block">
+                    <div id="desktop-nav-links" class="ml-10 flex items-baseline space-x-8">
+                        <!-- Links injected by JS based on auth state -->
+                    </div>
+                </div>
+
+                <!-- Right Side Actions -->
+                <div class="hidden md:flex items-center gap-4">
+                    <div id="wallet-display" class="hidden items-center gap-2 px-4 py-2 rounded-full border border-zenx-purple/50 bg-zenx-purple/10 text-sm font-bold tracking-wider">
+                        <i class="fa-solid fa-wallet text-zenx-neon"></i>
+                        <span id="wallet-address-short">0x00...0000</span>
+                    </div>
+                    <button id="connect-wallet-btn" class="hidden px-5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/20 transition-all font-bold text-sm tracking-wide" onclick="walletManager.connect()">
+                        Connect Wallet
+                    </button>
+                    <div id="auth-buttons" class="flex gap-3">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="-mr-2 flex md:hidden">
+                    <button type="button" onclick="ui.toggleMobileMenu()" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden glass-panel border-t border-white/10">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3" id="mobile-nav-links">
+                <!-- Links injected by JS -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow container mx-auto px-4 py-8 relative">
+        
+        <!-- PAGE: Landing -->
+        <section id="page-landing" class="page-section">
+            <div class="flex flex-col items-center justify-center text-center py-20 lg:py-32 fade-in">
+                <h1 class="text-5xl md:text-7xl font-display font-black mb-6 leading-tight">
+                    Unlock the <span class="text-transparent bg-clip-text bg-gradient-to-r from-zenx-neon to-zenx-purple neon-text">Future</span><br>of Web3
+                </h1>
+                <p class="text-xl md:text-2xl text-zenx-muted max-w-2xl mb-10">
+                    Earn ZENX points by completing tasks, engaging with the community, and climbing the ranks. The next generation testnet rewards platform.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button onclick="router.navigate('register')" class="px-8 py-4 rounded-lg bg-gradient-to-r from-zenx-purple to-zenx-neon hover:from-purple-600 hover:to-fuchsia-600 text-white font-bold text-lg tracking-wider shadow-lg shadow-purple-900/50 transition-all transform hover:scale-105">
+                        Start Earning Now
+                    </button>
+                    <button onclick="router.navigate('login')" class="px-8 py-4 rounded-lg border border-white/20 hover:bg-white/5 text-white font-bold text-lg tracking-wider transition-all backdrop-blur-sm">
+                        Login
+                    </button>
+                </div>
+                
+                <!-- Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20 w-full max-w-4xl">
+                    <div class="p-6 glass-panel rounded-xl">
+                        <h3 class="text-3xl font-display font-bold text-white mb-1">250K+</h3>
+                        <p class="text-zenx-muted uppercase tracking-widest text-sm">Users</p>
+                    </div>
+                    <div class="p-6 glass-panel rounded-xl">
+                        <h3 class="text-3xl font-display font-bold text-white mb-1">$1.2M</h3>
+                        <p class="text-zenx-muted uppercase tracking-widest text-sm">Rewards Distributed</p>
+                    </div>
+                    <div class="p-6 glass-panel rounded-xl">
+                        <h3 class="text-3xl font-display font-bold text-white mb-1">50+</h3>
+                        <p class="text-zenx-muted uppercase tracking-widest text-sm">Ecosystem Tasks</p>
+                    </div>
+                    <div class="p-6 glass-panel rounded-xl">
+                        <h3 class="text-3xl font-display font-bold text-white mb-1">Global</h3>
+                        <p class="text-zenx-muted uppercase tracking-widest text-sm">Community</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE: Login -->
+        <section id="page-login" class="page-section hidden-page">
+            <div class="max-w-md mx-auto mt-10 glass-panel p-8 rounded-2xl fade-in">
+                <h2 class="text-3xl font-display font-bold text-center mb-8">Welcome Back</h2>
+                <form onsubmit="auth.login(event)" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email Address</label>
+                        <input type="email" id="login-email" required class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 focus:outline-none neon-border text-white placeholder-gray-500 transition-colors" placeholder="you@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Password</label>
+                        <input type="password" id="login-password" required class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 focus:outline-none neon-border text-white placeholder-gray-500 transition-colors" placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-lg bg-gradient-to-r from-zenx-purple to-zenx-neon font-bold tracking-wider hover:brightness-110 transition-all">LOGIN</button>
+                </form>
+                <p class="text-center mt-6 text-sm text-zenx-muted">
+                    Don't have an account? <a href="#" onclick="router.navigate('register')" class="text-zenx-neon hover:underline">Sign up</a>
+                </p>
+            </div>
+        </section>
+
+        <!-- PAGE: Register -->
+        <section id="page-register" class="page-section hidden-page">
+            <div class="max-w-md mx-auto mt-10 glass-panel p-8 rounded-2xl fade-in">
+                <h2 class="text-3xl font-display font-bold text-center mb-8">Join ZENX</h2>
+                <form onsubmit="auth.register(event)" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Username</label>
+                        <input type="text" id="reg-username" required class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 focus:outline-none neon-border text-white placeholder-gray-500 transition-colors" placeholder="CyberNinja">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Email Address</label>
+                        <input type="email" id="reg-email" required class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 focus:outline-none neon-border text-white placeholder-gray-500 transition-colors" placeholder="you@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Password</label>
+                        <input type="password" id="reg-password" required class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 focus:outline-none neon-border text-white placeholder-gray-500 transition-colors" placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-lg bg-gradient-to-r from-zenx-purple to-zenx-neon font-bold tracking-wider hover:brightness-110 transition-all">CREATE ACCOUNT</button>
+                </form>
+                <p class="text-center mt-6 text-sm text-zenx-muted">
+                    Already have an account? <a href="#" onclick="router.navigate('login')" class="text-zenx-neon hover:underline">Login</a>
+                </p>
+            </div>
+        </section>
+
+        <!-- PAGE: Dashboard -->
+        <section id="page-dashboard" class="page-section hidden-page">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 fade-in">
+                <!-- Main Stats -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- Balance Card -->
+                    <div class="glass-panel p-8 rounded-2xl relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-zenx-purple blur-3xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                        <div class="relative z-10 flex justify-between items-end">
+                            <div>
+                                <h2 class="text-zenx-muted text-sm font-bold tracking-widest uppercase mb-2">Total Balance</h2>
+                                <div class="flex items-baseline gap-2">
+                                    <span id="dash-balance" class="text-5xl font-display font-bold text-white neon-text">0</span>
+                                    <span class="text-xl text-zenx-neon font-bold">ZENX</span>
+                                </div>
+                            </div>
+                            <div class="hidden md:block text-right">
+                                <p class="text-sm text-zenx-muted">Rank</p>
+                                <p id="dash-rank" class="text-2xl font-bold text-white">#--</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="glass-panel p-6 rounded-xl border-l-4 border-zenx-purple">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-lg bg-zenx-purple/20 flex items-center justify-center text-zenx-purple">
+                                    <i class="fa-solid fa-list-check text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-zenx-muted text-xs uppercase">Completed Tasks</p>
+                                    <p id="dash-tasks" class="text-2xl font-bold text-white">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass-panel p-6 rounded-xl border-l-4 border-zenx-neon">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-lg bg-zenx-neon/20 flex items-center justify-center text-zenx-neon">
+                                    <i class="fa-solid fa-users text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="text-zenx-muted text-xs uppercase">Referrals</p>
+                                    <p id="dash-refs" class="text-2xl font-bold text-white">0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tasks Section -->
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-display font-bold">Available Tasks</h3>
+                            <button onclick="router.navigate('tasks')" class="text-sm text-zenx-neon hover:text-white transition-colors">View All</button>
+                        </div>
+                        <div id="dash-task-list" class="space-y-3">
+                            <!-- Tasks injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    <!-- Wallet Status -->
+                    <div class="glass-panel p-6 rounded-xl">
+                        <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-wallet text-zenx-purple"></i> Wallet Status</h3>
+                        <div id="dash-wallet-status" class="flex flex-col gap-3">
+                            <!-- Wallet UI injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Referral Widget -->
+                    <div class="glass-panel p-6 rounded-xl text-center">
+                        <h3 class="text-lg font-bold mb-2">Invite Friends</h3>
+                        <p class="text-sm text-zenx-muted mb-4">Earn <span class="text-zenx-neon font-bold">100 ZENX</span> for every friend who joins!</p>
+                        <div class="relative mb-4">
+                            <input type="text" id="dash-ref-link" readonly class="w-full bg-black/50 border border-white/10 rounded-lg py-2 px-3 text-xs text-gray-400 truncate" value="https://zenx.io/ref/...">
+                        </div>
+                        <button onclick="referralSystem.copyLink()" class="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-bold transition-all">Copy Link</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE: Tasks -->
+        <section id="page-tasks" class="page-section hidden-page">
+            <h2 class="text-3xl font-display font-bold mb-8 fade-in">Community Tasks</h2>
+            <div id="full-task-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">
+                <!-- Tasks Injected via JS -->
+            </div>
+        </section>
+
+        <!-- PAGE: Referral -->
+        <section id="page-referral" class="page-section hidden-page">
+            <h2 class="text-3xl font-display font-bold mb-6 fade-in">Referral Program</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 fade-in">
+                <div class="glass-panel p-8 rounded-2xl text-center">
+                    <div class="w-20 h-20 mx-auto bg-zenx-neon/20 rounded-full flex items-center justify-center mb-6 animate-float">
+                        <i class="fa-solid fa-gift text-4xl text-zenx-neon"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">Invite & Earn</h3>
+                    <p class="text-zenx-muted mb-6">Share your unique link. You get 100 ZENX, and your friend gets a head start!</p>
+                    
+                    <div class="bg-black/40 p-4 rounded-lg border border-white/10 mb-4">
+                        <p class="text-xs text-zenx-muted uppercase mb-2">Your Referral Link</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="ref-page-link" readonly class="flex-1 bg-transparent border-none text-white font-mono text-sm outline-none" value="">
+                            <button onclick="referralSystem.copyLink()" class="text-zenx-neon hover:text-white"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Simulation Button for Demo -->
+                    <button onclick="referralSystem.simulateReferral()" class="text-xs text-gray-500 hover:text-gray-300 underline mt-4">
+                        [Demo] Simulate a User Signing Up
+                    </button>
+                </div>
+
+                <div class="glass-panel p-8 rounded-2xl">
+                    <h3 class="text-xl font-bold mb-6">Your Referrals</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="text-xs text-zenx-muted uppercase border-b border-white/10">
+                                <tr>
+                                    <th class="pb-3">User</th>
+                                    <th class="pb-3">Date</th>
+                                    <th class="pb-3 text-right">Reward</th>
+                                </tr>
+                            </thead>
+                            <tbody id="referral-list-body" class="text-sm">
+                                <!-- Referrals Injected -->
+                            </tbody>
+                        </table>
+                        <div id="no-refs-msg" class="text-center py-8 text-zenx-muted hidden">No referrals yet. Start sharing!</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE: Leaderboard -->
+        <section id="page-leaderboard" class="page-section hidden-page">
+            <div class="max-w-4xl mx-auto fade-in">
+                <div class="text-center mb-10">
+                    <h2 class="text-4xl font-display font-bold mb-2">Top ZENX Earners</h2>
+                    <p class="text-zenx-muted">Compete with the community to win exclusive rewards.</p>
+                </div>
+
+                <!-- Top 3 Podium -->
+                <div class="flex justify-center items-end gap-4 mb-12">
+                    <!-- 2nd Place -->
+                    <div class="flex flex-col items-center">
+                        <div class="w-16 h-16 rounded-full bg-gray-700 border-2 border-gray-400 mb-2 overflow-hidden">
+                            <img src="https://picsum.photos/seed/silver/100/100" alt="Avatar" class="w-full h-full object-cover">
+                        </div>
+                        <div class="font-bold mb-1" id="podium-2-name">Loading...</div>
+                        <div class="bg-gray-700/30 w-20 h-24 flex items-start justify-center pt-2 rounded-t-lg border-t border-gray-500">
+                            <span class="text-2xl font-bold text-gray-400">2</span>
+                        </div>
+                    </div>
+                    <!-- 1st Place -->
+                    <div class="flex flex-col items-center">
+                        <i class="fa-solid fa-crown text-yellow-400 text-2xl mb-2 animate-bounce"></i>
+                        <div class="w-20 h-20 rounded-full bg-yellow-600 border-2 border-yellow-400 mb-2 overflow-hidden shadow-lg shadow-yellow-600/20">
+                            <img src="https://picsum.photos/seed/gold/100/100" alt="Avatar" class="w-full h-full object-cover">
+                        </div>
+                        <div class="font-bold mb-1 text-lg" id="podium-1-name">Loading...</div>
+                        <div class="bg-yellow-600/10 w-24 h-32 flex items-start justify-center pt-2 rounded-t-lg border-t border-yellow-500">
+                            <span class="text-3xl font-bold text-yellow-400">1</span>
+                        </div>
+                    </div>
+                    <!-- 3rd Place -->
+                    <div class="flex flex-col items-center">
+                        <div class="w-16 h-16 rounded-full bg-orange-900 border-2 border-orange-700 mb-2 overflow-hidden">
+                            <img src="https://picsum.photos/seed/bronze/100/100" alt="Avatar" class="w-full h-full object-cover">
+                        </div>
+                        <div class="font-bold mb-1" id="podium-3-name">Loading...</div>
+                        <div class="bg-orange-900/20 w-20 h-16 flex items-start justify-center pt-2 rounded-t-lg border-t border-orange-800">
+                            <span class="text-2xl font-bold text-orange-700">3</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- List -->
+                <div class="glass-panel rounded-xl overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-white/5 text-zenx-muted text-xs uppercase tracking-wider">
+                            <tr>
+                                <th class="p-4">Rank</th>
+                                <th class="p-4">User</th>
+                                <th class="p-4 text-right">ZENX Points</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body" class="divide-y divide-white/5">
+                            <!-- Rows injected JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE: Profile -->
+        <section id="page-profile" class="page-section hidden-page">
+            <div class="max-w-2xl mx-auto glass-panel p-8 rounded-2xl fade-in">
+                <div class="flex items-center gap-6 mb-8">
+                    <div class="w-24 h-24 rounded-full bg-gradient-to-br from-zenx-purple to-zenx-neon p-1">
+                        <div class="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
+                            <i class="fa-solid fa-user text-3xl text-gray-400"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 id="profile-username" class="text-3xl font-bold font-display">Username</h2>
+                        <p id="profile-email" class="text-zenx-muted">email@example.com</p>
+                        <div id="profile-role" class="mt-2 inline-block px-2 py-0.5 rounded text-xs font-bold bg-zenx-purple/30 text-zenx-neon border border-zenx-purple/50">USER</div>
+                    </div>
+                </div>
+
+                <form onsubmit="profileManager.update(event)" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Username</label>
+                            <input type="text" id="edit-username" class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 focus:outline-none neon-border text-white transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Email</label>
+                            <input type="email" disabled class="w-full bg-black/20 border border-white/5 rounded-lg px-4 py-3 text-gray-500 cursor-not-allowed">
+                        </div>
+                    </div>
+                    <button type="submit" class="px-6 py-2 rounded-lg bg-zenx-purple hover:bg-zenx-neon transition-colors font-bold">Save Changes</button>
+                </form>
+
+                <div class="mt-10 pt-8 border-t border-white/10">
+                    <h3 class="text-lg font-bold text-zenx-danger mb-4">Danger Zone</h3>
+                    <button onclick="auth.logout()" class="px-4 py-2 rounded border border-zenx-danger text-zenx-danger hover:bg-zenx-danger hover:text-white transition-colors text-sm">Logout</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PAGE: Admin -->
+        <section id="page-admin" class="page-section hidden-page">
+            <h2 class="text-3xl font-display font-bold mb-6 fade-in">Admin Panel</h2>
+            
+            <!-- Admin Tabs -->
+            <div class="flex gap-4 mb-6">
+                <button onclick="adminManager.switchTab('users')" class="px-4 py-2 rounded bg-white/10 hover:bg-white/20 transition-colors">Users</button>
+                <button onclick="adminManager.switchTab('tasks')" class="px-4 py-2 rounded bg-white/10 hover:bg-white/20 transition-colors">Tasks</button>
+            </div>
+
+            <div id="admin-users-view" class="glass-panel rounded-xl overflow-hidden fade-in">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-white/5 text-zenx-muted uppercase">
+                        <tr>
+                            <th class="p-3">User</th>
+                            <th class="p-3">Wallet</th>
+                            <th class="p-3">Balance</th>
+                            <th class="p-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-user-list" class="divide-y divide-white/5">
+                        <!-- Injected JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="admin-tasks-view" class="hidden glass-panel p-6 rounded-xl fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold">Manage Tasks</h3>
+                    <button onclick="adminManager.addTaskPrompt()" class="px-3 py-1 bg-zenx-success text-black font-bold text-xs rounded hover:bg-green-400">+ Add Task</button>
+                </div>
+                <div id="admin-task-list" class="space-y-2">
+                    <!-- Injected JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="border-t border-white/10 bg-black/50 py-8 mt-auto">
+        <div class="container mx-auto px-4 text-center">
+            <div class="flex justify-center gap-6 mb-4">
+                <a href="#" class="text-zenx-muted hover:text-white"><i class="fa-brands fa-twitter"></i></a>
+                <a href="#" class="text-zenx-muted hover:text-white"><i class="fa-brands fa-telegram"></i></a>
+                <a href="#" class="text-zenx-muted hover:text-white"><i class="fa-brands fa-discord"></i></a>
+            </div>
+            <p class="text-zenx-muted text-sm">&copy; 2023 ZENX Platform. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        /**
+         * ZENX APPLICATION LOGIC
+         * Simulates Backend, Database, Auth, and Wallet Connection
+         */
+
+        // --- 1. UTILS & STATE ---
+        const utils = {
+            generateId: () => Math.random().toString(36).substr(2, 9),
+            
+            showToast: (message, type = 'info') => {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                
+                let colors = type === 'success' ? 'border-zenx-success text-zenx-success' : 
+                             type === 'error' ? 'border-zenx-danger text-zenx-danger' : 'border-zenx-purple text-white';
+                
+                let icon = type === 'success' ? 'fa-check-circle' : 
+                           type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+
+                toast.className = `glass-panel px-4 py-3 rounded-lg border-l-4 ${colors} shadow-lg flex items-center gap-3 min-w-[300px] fade-in`;
+                toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+                
+                container.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 400);
+                }, 3000);
+            },
+
+            formatAddress: (addr) => addr ? `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}` : 'Not Connected',
+        };
+
+        // --- 2. DATABASE SIMULATION (LocalStorage) ---
+        const db = {
+            init: () => {
+                if (!localStorage.getItem('zenx_users')) {
+                    localStorage.setItem('zenx_users', JSON.stringify([]));
+                }
+                if (!localStorage.getItem('zenx_tasks')) {
+                    const defaultTasks = [
+                        { id: 't1', title: 'Follow X Account', link: 'https://x.com/Methmika12', reward: 50, icon: 'fa-twitter', color: 'text-blue-400' },
+                        { id: 't2', title: 'Join Telegram Channel', link: 'https://t.me/zenx_testnet', reward: 50, icon: 'fa-paper-plane', color: 'text-blue-500' },
+                        { id: 't3', title: 'Join Telegram Group', link: 'https://t.me/zenx_community', reward: 50, icon: 'fa-users', color: 'text-blue-300' }
+                    ];
+                    localStorage.setItem('zenx_tasks', JSON.stringify(defaultTasks));
+                }
+            },
+            
+            getUsers: () => JSON.parse(localStorage.getItem('zenx_users')),
+            
+            saveUsers: (users) => localStorage.setItem('zenx_users', JSON.stringify(users)),
+            
+            getTasks: () => JSON.parse(localStorage.getItem('zenx_tasks')),
+            
+            getCurrentUser: () => JSON.parse(sessionStorage.getItem('zenx_session')),
+            
+            updateUser: (updatedUser) => {
+                const users = db.getUsers();
+                const index = users.findIndex(u => u.id === updatedUser.id);
+                if (index !== -1) {
+                    users[index] = updatedUser;
+                    db.saveUsers(users);
+                    sessionStorage.setItem('zenx_session', JSON.stringify(updatedUser));
+                    return true;
+                }
+                return false;
+            }
+        };
+
+        // --- 3. AUTHENTICATION ---
+        const auth = {
+            register: (e) => {
+                e.preventDefault();
+                const username = document.getElementById('reg-username').value;
+                const email = document.getElementById('reg-email').value;
+                const password = document.getElementById('reg-password').value;
+
+                const users = db.getUsers();
+                if (users.find(u => u.email === email)) {
+                    utils.showToast('Email already registered', 'error');
+                    return;
+                }
+
+                // Check for referral code in URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const referrerId = urlParams.get('ref');
+                
+                let referrer = null;
+                if (referrerId) {
+                    referrer = users.find(u => u.refCode === referrerId);
+                }
+
+                const newUser = {
+                    id: utils.generateId(),
+                    username,
+                    email,
+                    password, // In real app, hash this!
+                    balance: 0,
+                    completedTasks: [],
+                    referrals: [],
+                    refCode: 'REF' + utils.generateId().toUpperCase(),
+                    walletAddress: null,
+                    isAdmin: false,
+                    joinedAt: new Date().toISOString()
+                };
+
+                // Handle Referral Reward
+                if (referrer) {
+                    referrer.balance += 100;
+                    referrer.referrals.push({
+                        username: username,
+                        date: new Date().toISOString()
+                    });
+                    db.updateUser(referrer);
+                }
+
+                users.push(newUser);
+                db.saveUsers(users);
+                
+                utils.showToast('Account created! Please login.', 'success');
+                router.navigate('login');
+            },
+
+            login: (e) => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+                
+                const users = db.getUsers();
+                const user = users.find(u => u.email === email && u.password === password);
+
+                // Hardcoded Admin Backdoor
+                if (email === 'admin@zenx.com' && password === 'admin') {
+                    const adminUser = users.find(u => u.email === 'admin@zenx.com');
+                    if(!adminUser) {
+                        // Create admin if not exists
+                        const newAdmin = { id: 'admin1', username: 'Admin', email, password, balance: 999999, completedTasks: [], referrals: [], refCode: 'ADMIN', walletAddress: '0xAdmin', isAdmin: true, joinedAt: new Date().toISOString() };
+                        users.push(newAdmin);
+                        db.saveUsers(users);
+                        sessionStorage.setItem('zenx_session', JSON.stringify(newAdmin));
+                    } else {
+                        sessionStorage.setItem('zenx_session', JSON.stringify(adminUser));
+                    }
+                    utils.showToast('Welcome back, Admin.', 'success');
+                    router.navigate('admin');
+                    return;
+                }
+
+                if (user) {
+                    sessionStorage.setItem('zenx_session', JSON.stringify(user));
+                    utils.showToast('Login successful!', 'success');
+                    router.navigate('dashboard');
+                } else {
+                    utils.showToast('Invalid credentials', 'error');
+                }
+            },
+
+            logout: () => {
+                sessionStorage.removeItem('zenx_session');
+                router.navigate('landing');
+                utils.showToast('Logged out successfully');
+            }
+        };
+
+        // --- 4. WALLET MANAGER ---
+        const walletManager = {
+            connect: async () => {
+                const user = db.getCurrentUser();
+                if (!user) return router.navigate('login');
+
+                // Check if MetaMask is installed
+                if (typeof window.ethereum !== 'undefined') {
+                    try {
+                        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        const address = accounts[0];
+                        
+                        user.walletAddress = address;
+                        db.updateUser(user);
+                        utils.showToast('Wallet Connected!', 'success');
+                        ui.render();
+                    } catch (error) {
+                        utils.showToast('User rejected connection', 'error');
+                    }
+                } else {
+                    // Fallback simulation for demo purposes if no Metamask
+                    const mockAddress = '0x' + Array(40).fill(0).map(()=>Math.floor(Math.random()*16).toString(16)).join('');
+                    user.walletAddress = mockAddress;
+                    db.updateUser(user);
+                    utils.showToast('Demo Wallet Connected (Simulated)', 'success');
+                    ui.render();
+                }
+            }
+        };
+
+        // --- 5. TASK SYSTEM ---
+        const taskSystem = {
+            claim: (taskId, taskReward) => {
+                const user = db.getCurrentUser();
+                if (!user) return router.navigate('login');
+
+                if (user.completedTasks.includes(taskId)) {
+                    utils.showToast('Task already completed!', 'error');
+                    return;
+                }
+
+                // Simulate API delay
+                setTimeout(() => {
+                    user.balance += parseInt(taskReward);
+                    user.completedTasks.push(taskId);
+                    db.updateUser(user);
+                    utils.showToast(`+${taskReward} ZENX Added!`, 'success');
+                    ui.render();
+                }, 800);
+            }
+        };
+
+        // --- 6. REFERRAL SYSTEM ---
+        const referralSystem = {
+            copyLink: () => {
+                const user = db.getCurrentUser();
+                if(!user) return;
+                const link = `${window.location.origin}${window.location.pathname}?ref=${user.refCode}`;
+                navigator.clipboard.writeText(link).then(() => {
+                    utils.showToast('Referral link copied!', 'success');
+                });
+            },
+            
+            simulateReferral: () => {
+                // Simulates another user clicking the link and registering
+                const dummyEmail = `user${Math.floor(Math.random()*1000)}@test.com`;
+                const users = db.getUsers();
+                const currentUser = db.getCurrentUser();
+                
+                // Create dummy user
+                const dummyUser = {
+                    id: utils.generateId(),
+                    username: `User${Math.floor(Math.random()*1000)}`,
+                    email: dummyEmail,
+                    password: 'password',
+                    balance: 0,
+                    completedTasks: [],
+                    referrals: [],
+                    refCode: 'REF' + utils.generateId().toUpperCase(),
+                    walletAddress: null,
+                    isAdmin: false,
+                    joinedAt: new Date().toISOString()
+                };
+                
+                users.push(dummyUser);
+                
+                // Reward current user
+                currentUser.balance += 100;
+                currentUser.referrals.push({
+                    username: dummyUser.username,
+                    date: new Date().toISOString()
+                });
+                
+                db.saveUsers(users);
+                db.updateUser(currentUser);
+                
+                utils.showToast('New user registered via your link! +100 ZENX', 'success');
+                ui.render();
+            }
+        };
+
+        // --- 7. ADMIN MANAGER ---
+        const adminManager = {
+            switchTab: (tab) => {
+                document.getElementById('admin-users-view').classList.toggle('hidden', tab !== 'users');
+                document.getElementById('admin-tasks-view').classList.toggle('hidden', tab !== 'tasks');
+            },
+
+            banUser: (userId) => {
+                const users = db.getUsers().filter(u => u.id !== userId);
+                db.saveUsers(users);
+                utils.showToast('User banned (removed)', 'success');
+                ui.renderAdmin();
+            },
+            
+            adjustBalance: (userId, amount) => {
+                const users = db.getUsers();
+                const user = users.find(u => u.id === userId);
+                if(user) {
+                    user.balance += parseInt(amount);
+                    db.saveUsers(users);
+                    utils.showToast(`Updated balance`, 'success');
+                    ui.renderAdmin();
+                }
+            },
+
+            addTaskPrompt: () => {
+                const title = prompt("Task Title:");
+                if(!title) return;
+                const reward = prompt("Reward Points (e.g. 50):");
+                const tasks = db.getTasks();
+                tasks.push({
+                    id: 't'+utils.generateId(),
+                    title: title,
+                    link: '#',
+                    reward: parseInt(reward) || 0,
+                    icon: 'fa-star',
+                    color: 'text-yellow-400'
+                });
+                localStorage.setItem('zenx_tasks', JSON.stringify(tasks));
+                ui.renderAdmin();
+            }
+        };
+
+        // --- 8. UI RENDERER & ROUTER ---
+        const router = {
+            currentPage: 'landing',
+            navigate: (pageId) => {
+                // Auth Guard
+                const user = db.getCurrentUser();
+                const protectedPages = ['dashboard', 'tasks', 'referral', 'profile', 'admin'];
+                if (protectedPages.includes(pageId) && !user) {
+                    utils.showToast('Please login first', 'error');
+                    pageId = 'login';
+                }
+
+                // Admin Guard
+                if (pageId === 'admin' && user && !user.isAdmin) {
+                    utils.showToast('Access Denied', 'error');
+                    pageId = 'dashboard';
+                }
+
+                // Hide all pages
+                document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden-page'));
+                
+                // Show target page
+                document.getElementById(`page-${pageId}`).classList.remove('hidden-page');
+                
+                router.currentPage = pageId;
+                ui.render();
+                window.scrollTo(0, 0);
+            }
+        };
+
+        const ui = {
+            toggleMobileMenu: () => {
+                const menu = document.getElementById('mobile-menu');
+                menu.classList.toggle('hidden');
+            },
+
+            render: () => {
+                const user = db.getCurrentUser();
+                const tasks = db.getTasks();
+
+                // 1. Navbar Render
+                const navLinks = document.getElementById('desktop-nav-links');
+                const mobileNavLinks = document.getElementById('mobile-nav-links');
+                const authButtons = document.getElementById('auth-buttons');
+                const walletBtn = document.getElementById('connect-wallet-btn');
+                const walletDisplay = document.getElementById('wallet-display');
+
+                if (user) {
+                    const linksHtml = `
+                        <a href="#" onclick="router.navigate('dashboard')" class="hover:text-zenx-neon px-3 py-2 rounded-md font-medium transition-colors ${router.currentPage === 'dashboard' ? 'text-zenx-neon' : 'text-white'}">Dashboard</a>
+                        <a href="#" onclick="router.navigate('tasks')" class="hover:text-zenx-neon px-3 py-2 rounded-md font-medium transition-colors ${router.currentPage === 'tasks' ? 'text-zenx-neon' : 'text-white'}">Tasks</a>
+                        <a href="#" onclick="router.navigate('leaderboard')" class="hover:text-zenx-neon px-3 py-2 rounded-md font-medium transition-colors ${router.currentPage === 'leaderboard' ? 'text-zenx-neon' : 'text-white'}">Leaderboard</a>
+                        <a href="#" onclick="router.navigate('referral')" class="hover:text-zenx-neon px-3 py-2 rounded-md font-medium transition-colors ${router.currentPage === 'referral' ? 'text-zenx-neon' : 'text-white'}">Referral</a>
+                        ${user.isAdmin ? `<a href="#" onclick="router.navigate('admin')" class="text-red-400 hover:text-red-300 px-3 py-2 rounded-md font-medium transition-colors">Admin</a>` : ''}
+                    `;
+                    navLinks.innerHTML = linksHtml;
+                    mobileNavLinks.innerHTML = linksHtml;
+
+                    authButtons.innerHTML = `
+                        <a href="#" onclick="router.navigate('profile')" class="flex items-center gap-2 hover:text-zenx-neon transition-colors">
+                            <div class="w-8 h-8 rounded-full bg-zenx-purple flex items-center justify-center text-xs font-bold">${user.username.substring(0,2).toUpperCase()}</div>
+                        </a>
+                    `;
+
+                    // Wallet UI
+                    if (user.walletAddress) {
+                        walletBtn.classList.add('hidden');
+                        walletDisplay.classList.remove('hidden');
+                        walletDisplay.classList.add('flex');
+                        document.getElementById('wallet-address-short').innerText = utils.formatAddress(user.walletAddress);
+                    } else {
+                        walletBtn.classList.remove('hidden');
+                        walletDisplay.classList.add('hidden');
+                        walletDisplay.classList.remove('flex');
+                    }
+                } else {
+                    navLinks.innerHTML = `
+                        <a href="#" onclick="router.navigate('landing')" class="hover:text-zenx-neon px-3 py-2 rounded-md font-medium transition-colors">Home</a>
+                        <a href="#" onclick="router.navigate('leaderboard')" class="hover:text-zenx-neon px-3 py-2 rounded-md font-medium transition-colors">Leaderboard</a>
+                    `;
+                    mobileNavLinks.innerHTML = navLinks.innerHTML;
+                    authButtons.innerHTML = `
+                        <button onclick="router.navigate('login')" class="text-white hover:text-zenx-neon font-bold px-3">Login</button>
+                        <button onclick="router.navigate('register')" class="bg-zenx-purple hover:bg-zenx-neon text-white px-4 py-2 rounded-lg font-bold transition-all">Sign Up</button>
+                    `;
+                    walletBtn.classList.add('hidden');
+                    walletDisplay.classList.add('hidden');
+                }
+
+                // 2. Dashboard Render
+                if (user && router.currentPage === 'dashboard') {
+                    document.getElementById('dash-balance').innerText = user.balance;
+                    document.getElementById('dash-tasks').innerText = user.completedTasks.length;
+                    document.getElementById('dash-refs').innerText = user.referrals.length;
+                    document.getElementById('dash-ref-link').value = `${window.location.origin}${window.location.pathname}?ref=${user.refCode}`;
+                    
+                    // Wallet Widget
+                    const walletStatus = document.getElementById('dash-wallet-status');
+                    if(user.walletAddress) {
+                        walletStatus.innerHTML = `<div class="text-sm text-green-400 mb-1"><i class="fa-solid fa-circle-check mr-1"></i> Connected</div><div class="font-mono text-xs text-gray-400 bg-black/30 p-2 rounded">${user.walletAddress}</div>`;
+                    } else {
+                        walletStatus.innerHTML = `<div class="text-sm text-gray-500 mb-2"><i class="fa-solid fa-circle-xmark mr-1"></i> Not Connected</div><button onclick="walletManager.connect()" class="w-full py-2 border border-zenx-purple text-zenx-purple hover:bg-zenx-purple hover:text-white rounded text-sm transition-colors">Connect Wallet</button>`;
+                    }
+
+                    // Dashboard Tasks List (Top 2)
+                    const dashTaskList = document.getElementById('dash-task-list');
+                    dashTaskList.innerHTML = '';
+                    tasks.slice(0, 2).forEach(task => {
+                        const isDone = user.completedTasks.includes(task.id);
+                        dashTaskList.innerHTML += ui.createTaskCard(task, isDone);
+                    });
+                }
+
+                // 3. Tasks Page Render
+                if (user && router.currentPage === 'tasks') {
+                    const fullTaskList = document.getElementById('full-task-list');
+                    fullTaskList.innerHTML = '';
+                    tasks.forEach(task => {
+                        const isDone = user.completedTasks.includes(task.id);
+                        fullTaskList.innerHTML += ui.createTaskCard(task, isDone);
+                    });
+                }
+
+                // 4. Referral Page Render
+                if (user && router.currentPage === 'referral') {
+                    document.getElementById('ref-page-link').value = `${window.location.origin}${window.location.pathname}?ref=${user.refCode}`;
+                    const refList = document.getElementById('referral-list-body');
+                    const noRefs = document.getElementById('no-refs-msg');
+                    
+                    if(user.referrals.length === 0) {
+                        refList.innerHTML = '';
+                        noRefs.classList.remove('hidden');
+                    } else {
+                        noRefs.classList.add('hidden');
+                        refList.innerHTML = user.referrals.map(r => `
+                            <tr class="border-b border-white/5">
+                                <td class="py-3 font-medium">${r.username}</td>
+                                <td class="py-3 text-gray-400">${new Date(r.date).toLocaleDateString()}</td>
+                                <td class="py-3 text-right text-zenx-success font-bold">+100 ZENX</td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+
+                // 5. Profile Render
+                if (user && router.currentPage === 'profile') {
+                    document.getElementById('profile-username').innerText = user.username;
+                    document.getElementById('profile-email').innerText = user.email;
+                    document.getElementById('edit-username').value = user.username;
+                    document.getElementById('profile-role').innerText = user.isAdmin ? 'ADMINISTRATOR' : 'USER';
+                    document.getElementById('profile-role').className = user.isAdmin ? 'mt-2 inline-block px-2 py-0.5 rounded text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/50' : 'mt-2 inline-block px-2 py-0.5 rounded text-xs font-bold bg-zenx-purple/30 text-zenx-neon border border-zenx-purple/50';
+                }
+
+                // 6. Leaderboard Render
+                if (router.currentPage === 'leaderboard') {
+                    const allUsers = db.getUsers().sort((a,b) => b.balance - a.balance);
+                    const leaderboardBody = document.getElementById('leaderboard-body');
+                    
+                    // Update Podium
+                    if(allUsers.length > 0) {
+                        document.getElementById('podium-1-name').innerText = allUsers[0]?.username || '-';
+                        document.getElementById('podium-2-name').innerText = allUsers[1]?.username || '-';
+                        document.getElementById('podium-3-name').innerText = allUsers[2]?.username || '-';
+                    }
+
+                    leaderboardBody.innerHTML = allUsers.slice(0, 100).map((u, i) => `
+                        <tr class="hover:bg-white/5 transition-colors ${u.id === user?.id ? 'bg-zenx-purple/10 border-l-2 border-zenx-neon' : ''}">
+                            <td class="p-4 font-mono text-gray-400">#${i + 1}</td>
+                            <td class="p-4 font-bold flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs">${u.username[0].toUpperCase()}</div>
+                                ${u.username}
+                            </td>
+                            <td class="p-4 text-right font-mono text-zenx-neon font-bold">${u.balance.toLocaleString()}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                // 7. Admin Render
+                if (user && user.isAdmin && router.currentPage === 'admin') {
+                    ui.renderAdmin();
+                }
+            },
+
+            createTaskCard: (task, isDone) => {
+                if (isDone) {
+                    return `
+                    <div class="glass-panel p-4 rounded-lg border border-white/5 flex items-center justify-between opacity-60">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-lg bg-zenx-success/20 flex items-center justify-center text-zenx-success text-xl">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold line-through text-gray-400">${task.title}</h4>
+                                <span class="text-xs text-zenx-muted">Completed</span>
+                            </div>
+                        </div>
+                    </div>`;
+                }
+
+                return `
+                <div class="glass-panel p-4 rounded-lg border border-white/10 flex items-center justify-between hover:border-zenx-purple/50 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center ${task.color} text-xl">
+                            <i class="fa-brands ${task.icon} ${task.icon.includes('fa-') ? '' : 'fa-solid'}"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold">${task.title}</h4>
+                            <span class="text-xs text-zenx-neon font-bold">+${task.reward} ZENX</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <a href="${task.link}" target="_blank" class="px-3 py-1.5 rounded text-sm bg-white/5 hover:bg-white/10 transition-colors">Start</a>
+                        <button onclick="taskSystem.claim('${task.id}', ${task.reward})" class="px-3 py-1.5 rounded text-sm bg-zenx-purple hover:bg-zenx-neon text-white font-bold transition-colors">Claim</button>
+                    </div>
+                </div>`;
+            },
+
+            renderAdmin: () => {
+                // Users Table
+                const allUsers = db.getUsers();
+                document.getElementById('admin-user-list').innerHTML = allUsers.map(u => `
+                    <tr class="border-b border-white/5 hover:bg-white/5">
+                        <td class="p-3">
+                            <div class="font-bold">${u.username}</div>
+                            <div class="text-xs text-gray-500">${u.email}</div>
+                        </td>
+                        <td class="p-3 font-mono text-xs">${u.walletAddress || '-'}</td>
+                        <td class="p-3 font-bold text-zenx-neon">${u.balance}</td>
+                        <td class="p-3 text-right">
+                            <button onclick="adminManager.adjustBalance('${u.id}', 500)" class="text-xs text-green-400 hover:text-green-300 mr-2">+500</button>
+                            <button onclick="adminManager.banUser('${u.id}')" class="text-xs text-red-400 hover:text-red-300">Ban</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // Tasks List
+                const allTasks = db.getTasks();
+                document.getElementById('admin-task-list').innerHTML = allTasks.map(t => `
+                    <div class="flex justify-between items-center bg-black/40 p-3 rounded border border-white/5">
+                        <span>${t.title} <span class="text-zenx-neon text-xs">(${t.reward})</span></span>
+                        <span class="text-xs text-gray-500">${t.id}</span>
+                    </div>
+                `).join('');
+            }
+        };
+
+        const profileManager = {
+            update: (e) => {
+                e.preventDefault();
+                const newName = document.getElementById('edit-username').value;
+                const user = db.getCurrentUser();
+                user.username = newName;
+                db.updateUser(user);
+                utils.showToast('Profile updated', 'success');
+                ui.render();
+            }
+        };
+
+        // --- INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            db.init();
+            
+            // Check if user is already logged in
+            const user = db.getCurrentUser();
+            if (user) {
+                router.navigate('dashboard');
+            } else {
+                router.navigate('landing');
+            }
+        });
+
+    </script>
+</body>
+</html>
